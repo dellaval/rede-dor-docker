@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  app-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app-node
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_NAME=rededor
+      - NODE_ENV=development
+    depends_on:
+      - db  # Atualização: 'depends_on' não suporta condição na versão 3.8
+    links:
+      - db
+
+  app-php:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    container_name: app-php
+    ports:
+      - "8181:80"
+
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_DATABASE=rededor
+      - MYSQL_ROOT_HOST=%
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # - ./mysql-config:/etc/mysql/conf.d  # Configuração personalizada para permitir acesso de qualquer IP
+      # - ./mysql-init:/docker-entrypoint-initdb.d  # Script de inicialização
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root --password=123123 || exit 1"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+volumes:
+  mysql-data:
